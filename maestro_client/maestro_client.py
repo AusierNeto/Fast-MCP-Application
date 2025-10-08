@@ -142,7 +142,7 @@ class MaestroClient:
         Raises:
             MaestroClientError on non-OK responses or malformed payloads.
         """
-        url = f"{self.base_url}/maestro/api/login"
+        url = f"{self.base_url}/api/v2/workspace/login"
         payload = {"login": self.login_value, "key": self.key_value}
         resp = requests.post(url, json=payload, timeout=self.timeout)
 
@@ -150,8 +150,8 @@ class MaestroClient:
             raise MaestroClientError(f"Authentication failed: {resp.status_code} {resp.text}")
 
         data = _safe_json(resp)
-        token = data.get("token")
-        organization = data.get("organization")
+        token = data.get("accessToken")
+        organization = data.get("organizationLabel")
 
         if not token or not organization:
             raise MaestroClientError(f"Invalid login response. Expected token & organization. Got: {data}")
@@ -269,8 +269,8 @@ class MaestroClient:
             return path
         if not path.startswith("/"):
             path = "/" + path
-        if not path.startswith("/maestro/api"):
-            path = "/maestro/api" + path
+        if not path.startswith("/api/v2"):
+            path = "/api/v2" + path
         return f"{self.base_url}{path}"
 
     # -------------
@@ -317,38 +317,31 @@ class _TasksAPI:
     def __init__(self, client: MaestroClient):
         self._c = client
 
-    def list(self, *, status: Optional[str] = None, automation_label: Optional[str] = None,
-             page: int = 1, size: int = 50, extra: Optional[Dict[str, Any]] = None) -> MaestroResponse:
+    def list(self, **kwargs) -> MaestroResponse:
         """GET /tasks"""
-        params = {"page": page, "size": size}
-        if status:
-            params["status"] = status
-        if automation_label:
-            params["automationLabel"] = automation_label
-        if extra:
-            params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/tasks", params=params)
+        query_params = "&".join(f"{k}={v}" for k, v in kwargs.items() if v is not None)
+        return self._c.request_raw("GET", f"/api/v2/task?{query_params}")
 
     def create(self, automation_label: str, data: Dict[str, Any]) -> MaestroResponse:
         """POST /tasks"""
         payload = {"automationLabel": automation_label, "data": data}
-        return self._c.request_raw("POST", "/maestro/api/tasks", json=payload)
+        return self._c.request_raw("POST", "/api/v2/task", json=payload)
 
     def get(self, task_id: Union[str, int]) -> MaestroResponse:
         """GET /tasks/{taskId}"""
-        return self._c.request_raw("GET", f"/maestro/api/tasks/{task_id}")
+        return self._c.request_raw("GET", f"/api/v2/task/{task_id}")
 
     def cancel(self, task_id: Union[str, int]) -> MaestroResponse:
         """POST /tasks/{taskId}/cancel"""
-        return self._c.request_raw("POST", f"/maestro/api/tasks/{task_id}/cancel")
+        return self._c.request_raw("POST", f"/api/v2/task/{task_id}/cancel")
 
     def finish(self, task_id: Union[str, int], result: Optional[Dict[str, Any]] = None) -> MaestroResponse:
         """POST /tasks/{taskId}/finish"""
-        return self._c.request_raw("POST", f"/maestro/api/tasks/{task_id}/finish", json=result or {})
+        return self._c.request_raw("POST", f"/api/v2/task/{task_id}/finish", json=result or {})
 
     def restart(self, task_id: Union[str, int]) -> MaestroResponse:
         """POST /tasks/{taskId}/restart"""
-        return self._c.request_raw("POST", f"/maestro/api/tasks/{task_id}/restart")
+        return self._c.request_raw("POST", f"/api/v2/task/{task_id}/restart")
 
 
 class _LogsAPI:

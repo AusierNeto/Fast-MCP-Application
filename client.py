@@ -9,7 +9,7 @@ from utils.constants import MCP_SERVER_URL, OLLAMA_BASE_URL
 llm = OllamaLLM(model="llama3", base_url=OLLAMA_BASE_URL)
 
 async def main():
-    mcp = Client("MCP Server", server_url=MCP_SERVER_URL)
+    mcp = Client("http://127.0.0.1:8000/mcp")
     async with mcp:
         tools = await mcp.list_tools()
 
