@@ -466,17 +466,18 @@ class _RunnersAPI:
     def __init__(self, client: MaestroClient):
         self._c = client
 
-    def list(self, page: int = 1, size: int = 50, extra: Optional[Dict[str, Any]] = None) -> MaestroResponse:
-        """GET /runners"""
-        params = {"page": page, "size": size}
-        if extra:
-            params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/runners", params=params)
-
-    def get(self, runner_id: Union[str, int]) -> MaestroResponse:
+    def get_info(self, runner_id: Union[str, int]) -> MaestroResponse:
         """GET /runners/{runnerId}"""
-        return self._c.request_raw("GET", f"/maestro/api/runners/{runner_id}")
+        return self._c.request_raw("GET", f"/api/v2/machine/{runner_id}")
 
+    def get_log(self, runner_id: Union[str, int]) -> MaestroResponse:
+        """GET /runners/{runnerId}"""
+        return self._c.request_raw("GET", f"/api/v2/machine/log/{runner_id}")
+    
+    def get_tasks_summary(self, runner_id: Union[str, int]) -> MaestroResponse:
+        """GET /runners/{runnerId}"""
+        return self._c.request_raw("GET", f"/api/v2/machine/{runner_id}/tasks-summary?days=30")
+    
 
 class _CredentialsAPI:
     """
