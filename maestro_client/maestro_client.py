@@ -319,6 +319,7 @@ class _TasksAPI:
 
     def list(self, **kwargs) -> MaestroResponse:
         """GET /tasks"""
+        print(f"kwargs: {kwargs}")
         query_params = "&".join(f"{k}={v}" for k, v in kwargs.items() if v is not None)
         return self._c.request_raw("GET", f"/api/v2/task?{query_params}")
 
@@ -431,11 +432,11 @@ class _BotsAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/bots", params=params)
+        return self._c.request_raw("GET", "/api/v2/bot", params=params)
 
-    def get(self, bot_id: Union[str, int]) -> MaestroResponse:
+    def get(self, bot_id:str, bot_version:str) -> MaestroResponse:
         """GET /bots/{botId}"""
-        return self._c.request_raw("GET", f"/maestro/api/bots/{bot_id}")
+        return self._c.request_raw("GET", f"/api/v2/bot/{bot_id}/version/{bot_version}")
 
     def create(self, *, label: str, repository: Optional[str] = None, **kwargs) -> MaestroResponse:
         """POST /bots"""
@@ -443,15 +444,15 @@ class _BotsAPI:
         if repository:
             payload["repository"] = repository
         payload.update(kwargs)
-        return self._c.request_raw("POST", "/maestro/api/bots", json=payload)
+        return self._c.request_raw("POST", "/api/v2/bot", json=payload)
 
     def update(self, bot_id: Union[str, int], **fields) -> MaestroResponse:
         """PUT /bots/{botId}"""
-        return self._c.request_raw("PUT", f"/maestro/api/bots/{bot_id}", json=fields)
+        return self._c.request_raw("PUT", f"/api/v2/bot/{bot_id}", json=fields)
 
     def release(self, bot_id: Union[str, int], **fields) -> MaestroResponse:
         """POST /bots/{botId}/release (if supported)"""
-        return self._c.request_raw("POST", f"/maestro/api/bots/{bot_id}/release", json=fields)
+        return self._c.request_raw("POST", f"/api/v2/bot/{bot_id}/release", json=fields)
 
 
 class _RunnersAPI:
