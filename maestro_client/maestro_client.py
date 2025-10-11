@@ -407,11 +407,11 @@ class _AutomationsAPI:
             params["label"] = label
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/automations", params=params)
+        return self._c.request_raw("GET", "/api/v2/activity", params=params)
 
-    def get(self, automation_id: Union[str, int]) -> MaestroResponse:
+    def get(self, automation_label:str) -> MaestroResponse:
         """GET /automations/{id}"""
-        return self._c.request_raw("GET", f"/maestro/api/automations/{automation_id}")
+        return self._c.request_raw("GET", f"/api/v2/activity/{automation_label}")
 
 
 class _BotsAPI:
