@@ -655,23 +655,23 @@ class _SchedulesAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/schedules", params=params)
+        return self._c.request_raw("GET", "/api/v2/scheduling", params=params)
 
     def get(self, schedule_id: Union[str, int]) -> MaestroResponse:
         """GET /schedules/{id}"""
-        return self._c.request_raw("GET", f"/maestro/api/schedules/{schedule_id}")
+        return self._c.request_raw("GET", f"/api/v2/scheduling/{schedule_id}")
 
     def create(self, **fields) -> MaestroResponse:
         """POST /schedules"""
-        return self._c.request_raw("POST", "/maestro/api/schedules", json=fields)
+        return self._c.request_raw("POST", "/api/v2/scheduling", json=fields)
 
     def update(self, schedule_id: Union[str, int], **fields) -> MaestroResponse:
         """PUT /schedules/{id}"""
-        return self._c.request_raw("PUT", f"/maestro/api/schedules/{schedule_id}", json=fields)
+        return self._c.request_raw("PUT", f"/api/v2/scheduling/{schedule_id}", json=fields)
 
     def delete(self, schedule_id: Union[str, int]) -> MaestroResponse:
         """DELETE /schedules/{id}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/schedules/{schedule_id}")
+        return self._c.request_raw("DELETE", f"/api/v2/scheduling/{schedule_id}")
 
 
 class _WorkspacesAPI:
