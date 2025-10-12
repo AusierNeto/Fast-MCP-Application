@@ -503,23 +503,28 @@ class _CredentialsAPI:
         """GET /credentials/{id}"""
         return self._c.request_raw("GET", f"/api/v2/credential/{credential_id}")
 
-    def create(self, label: str, values: Dict[str, Any], **kwargs) -> MaestroResponse:
-        """POST /credentials"""
-        payload = {"label": label, "values": values}
+    def get_key(self, credential_id:str, credential_key:str) -> MaestroResponse:
+        """GET /credentials/{id}"""
+        return self._c.request_raw("GET", f"/api/v2/credential/{credential_id}/key/{credential_key}")
+    
+    def create(self, label:str, values:Dict[str, Any], repository_label:str="DEFAULT", **kwargs) -> MaestroResponse:
+        """
+        Create a new credential entry in BotCity Maestro.
+
+        Args:
+            label: Credential label name.
+            values: Dict with secret key-value pairs, e.g. {"user": "user123", "password": "pass123"}.
+            repository_label: Credential repository label (defaults to DEFAULT).
+        """
+        secrets = [{"key": k, "value": v} for k, v in values.items()]
+        payload = {
+            "label": label,
+            "organizationLabel": self._c.organization,
+            "repositoryLabel": repository_label,
+            "secrets": secrets
+        }
         payload.update(kwargs)
         return self._c.request_raw("POST", "/api/v2/credential", json=payload)
-
-    def update(self, credential_id: Union[str, int], **fields) -> MaestroResponse:
-        """PUT /credentials/{id}"""
-        return self._c.request_raw("PUT", f"/api/v2/credential/{credential_id}", json=fields)
-
-    def delete(self, credential_id: Union[str, int]) -> MaestroResponse:
-        """DELETE /credentials/{id}"""
-        return self._c.request_raw("DELETE", f"/api/v2/credential/{credential_id}")
-
-    def get_key(self, label: str, key: str) -> MaestroResponse:
-        """GET /credentials/{label}/{key}"""
-        return self._c.request_raw("GET", f"/api/v2/credential/{label}/key/{key}")
 
 
 class _DatapoolsAPI:
@@ -610,9 +615,8 @@ class _ErrorsAPI:
         """GET /errors/{errorId}"""
         return self._c.request_raw("GET", f"/api/v2/error/{error_id}")
 
-    def delete(self, error_id: Union[str, int]) -> MaestroResponse:
-        """DELETE /errors/{errorId}"""
-        return self._c.request_raw("DELETE", f"/api/v2/error/{error_id}")
+    def get_by_automation(self, automation_label:str) -> MaestroResponse:
+        return self._c.request_raw("GET", f"/api/v2/error?AutomationLabel={automation_label}&days=30")
 
 
 class _SchedulesAPI:
