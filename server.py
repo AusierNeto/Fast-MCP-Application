@@ -13,14 +13,10 @@ client = MaestroClient(
 )
 
 @mcp.tool
-def list_tasks(status: str = None) -> dict:
-    """List BotCity tasks by status."""
-    return client.tasks.list(status=status).data
+def list_tasks() -> dict:
+    """List Botcity tasks."""
+    return client.tasks.list().data
 
-@mcp.tool
-def get_bots() -> dict:
-    """List registered bots."""
-    return client.bots.list().data
 
 if __name__ == "__main__":
     mcp.run(transport="streamable-http", port=8000)

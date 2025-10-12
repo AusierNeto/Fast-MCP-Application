@@ -406,11 +406,11 @@ class _AutomationsAPI:
             params["label"] = label
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/automations", params=params)
+        return self._c.request_raw("GET", "/api/v2/activity", params=params)
 
-    def get(self, automation_id: Union[str, int]) -> MaestroResponse:
+    def get(self, automation_label:str) -> MaestroResponse:
         """GET /automations/{id}"""
-        return self._c.request_raw("GET", f"/maestro/api/automations/{automation_id}")
+        return self._c.request_raw("GET", f"/api/v2/activity/{automation_label}")
 
 
 class _BotsAPI:
@@ -431,11 +431,11 @@ class _BotsAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/bots", params=params)
+        return self._c.request_raw("GET", "/api/v2/bot", params=params)
 
-    def get(self, bot_id: Union[str, int]) -> MaestroResponse:
+    def get(self, bot_id:str, bot_version:str) -> MaestroResponse:
         """GET /bots/{botId}"""
-        return self._c.request_raw("GET", f"/maestro/api/bots/{bot_id}")
+        return self._c.request_raw("GET", f"/api/v2/bot/{bot_id}/version/{bot_version}")
 
     def create(self, *, label: str, repository: Optional[str] = None, **kwargs) -> MaestroResponse:
         """POST /bots"""
@@ -443,15 +443,15 @@ class _BotsAPI:
         if repository:
             payload["repository"] = repository
         payload.update(kwargs)
-        return self._c.request_raw("POST", "/maestro/api/bots", json=payload)
+        return self._c.request_raw("POST", "/api/v2/bot", json=payload)
 
     def update(self, bot_id: Union[str, int], **fields) -> MaestroResponse:
         """PUT /bots/{botId}"""
-        return self._c.request_raw("PUT", f"/maestro/api/bots/{bot_id}", json=fields)
+        return self._c.request_raw("PUT", f"/api/v2/bot/{bot_id}", json=fields)
 
     def release(self, bot_id: Union[str, int], **fields) -> MaestroResponse:
         """POST /bots/{botId}/release (if supported)"""
-        return self._c.request_raw("POST", f"/maestro/api/bots/{bot_id}/release", json=fields)
+        return self._c.request_raw("POST", f"/api/v2/bot/{bot_id}/release", json=fields)
 
 
 class _RunnersAPI:
@@ -465,17 +465,18 @@ class _RunnersAPI:
     def __init__(self, client: MaestroClient):
         self._c = client
 
-    def list(self, page: int = 1, size: int = 50, extra: Optional[Dict[str, Any]] = None) -> MaestroResponse:
-        """GET /runners"""
-        params = {"page": page, "size": size}
-        if extra:
-            params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/runners", params=params)
-
-    def get(self, runner_id: Union[str, int]) -> MaestroResponse:
+    def get_info(self, runner_id: Union[str, int]) -> MaestroResponse:
         """GET /runners/{runnerId}"""
-        return self._c.request_raw("GET", f"/maestro/api/runners/{runner_id}")
+        return self._c.request_raw("GET", f"/api/v2/machine/{runner_id}")
 
+    def get_log(self, runner_id: Union[str, int]) -> MaestroResponse:
+        """GET /runners/{runnerId}"""
+        return self._c.request_raw("GET", f"/api/v2/machine/log/{runner_id}")
+    
+    def get_tasks_summary(self, runner_id: Union[str, int]) -> MaestroResponse:
+        """GET /runners/{runnerId}"""
+        return self._c.request_raw("GET", f"/api/v2/machine/{runner_id}/tasks-summary?days=30")
+    
 
 class _CredentialsAPI:
     """
@@ -496,29 +497,34 @@ class _CredentialsAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/credentials", params=params)
+        return self._c.request_raw("GET", "/api/v2/credential", params=params)
 
     def get(self, credential_id: Union[str, int]) -> MaestroResponse:
         """GET /credentials/{id}"""
-        return self._c.request_raw("GET", f"/maestro/api/credentials/{credential_id}")
+        return self._c.request_raw("GET", f"/api/v2/credential/{credential_id}")
 
-    def create(self, label: str, values: Dict[str, Any], **kwargs) -> MaestroResponse:
-        """POST /credentials"""
-        payload = {"label": label, "values": values}
+    def get_key(self, credential_id:str, credential_key:str) -> MaestroResponse:
+        """GET /credentials/{id}"""
+        return self._c.request_raw("GET", f"/api/v2/credential/{credential_id}/key/{credential_key}")
+    
+    def create(self, label:str, values:Dict[str, Any], repository_label:str="DEFAULT", **kwargs) -> MaestroResponse:
+        """
+        Create a new credential entry in BotCity Maestro.
+
+        Args:
+            label: Credential label name.
+            values: Dict with secret key-value pairs
+            repository_label: Credential repository label (defaults to DEFAULT).
+        """
+        secrets = [{"key": k, "value": v} for k, v in values.items()]
+        payload = {
+            "label": label,
+            "organizationLabel": self._c.organization,
+            "repositoryLabel": repository_label,
+            "secrets": secrets
+        }
         payload.update(kwargs)
-        return self._c.request_raw("POST", "/maestro/api/credentials", json=payload)
-
-    def update(self, credential_id: Union[str, int], **fields) -> MaestroResponse:
-        """PUT /credentials/{id}"""
-        return self._c.request_raw("PUT", f"/maestro/api/credentials/{credential_id}", json=fields)
-
-    def delete(self, credential_id: Union[str, int]) -> MaestroResponse:
-        """DELETE /credentials/{id}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/credentials/{credential_id}")
-
-    def get_key(self, label: str, key: str) -> MaestroResponse:
-        """GET /credentials/{label}/{key}"""
-        return self._c.request_raw("GET", f"/maestro/api/credentials/{label}/{key}")
+        return self._c.request_raw("POST", "/api/v2/credential", json=payload)
 
 
 class _DatapoolsAPI:
@@ -539,27 +545,22 @@ class _DatapoolsAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/datapools", params=params)
+        return self._c.request_raw("GET", "/api/v2/datapool", params=params)
+    
+    def get(self, datapool_label:str) -> MaestroResponse:
+        return self._c.request_raw("GET", f"/api/v2/datapool/{datapool_label}")
 
-    def items(self, label: str, page: int = 1, size: int = 100,
-              extra: Optional[Dict[str, Any]] = None) -> MaestroResponse:
-        """GET /datapools/{label}/items"""
-        params = {"page": page, "size": size}
-        if extra:
-            params.update(extra)
-        return self._c.request_raw("GET", f"/maestro/api/datapools/{label}/items", params=params)
-
-    def add_item(self, label: str, item: Dict[str, Any]) -> MaestroResponse:
-        """POST /datapools/{label}/items"""
-        return self._c.request_raw("POST", f"/maestro/api/datapools/{label}/items", json=item)
-
-    def update_item(self, label: str, item_id: Union[str, int], fields: Dict[str, Any]) -> MaestroResponse:
-        """PUT /datapools/{label}/items/{itemId}"""
-        return self._c.request_raw("PUT", f"/maestro/api/datapools/{label}/items/{item_id}", json=fields)
-
-    def delete_item(self, label: str, item_id: Union[str, int]) -> MaestroResponse:
-        """DELETE /datapools/{label}/items/{itemId}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/datapools/{label}/items/{item_id}")
+    def view(self, datapool_label:str) -> MaestroResponse:
+        return self._c.request_raw("GET", f"/api/v2/datapool/{datapool_label}/view")
+    
+    def summary(self, datapool_label:str) -> MaestroResponse:
+        return self._c.request_raw("GET", f"/api/v2/datapool/{datapool_label}/summary")
+    
+    def create(self, **kwargs) -> MaestroResponse:
+        return self._c.request_raw("POST", f"/api/v2/datapool", json=kwargs)
+    
+    def add_item(self, datapool_label:str, **kwargs) -> MaestroResponse:
+        return self._c.request_raw("POST", f"/api/v2/datapool/{datapool_label}/push", json=kwargs)
 
 
 class _ResultFilesAPI:
@@ -575,37 +576,21 @@ class _ResultFilesAPI:
     def __init__(self, client: MaestroClient):
         self._c = client
 
-    def list(self, page: int = 1, size: int = 50, extra: Optional[Dict[str, Any]] = None) -> MaestroResponse:
+    def list(self, page: int = 1, size: int = 50, **kwargs) -> MaestroResponse:
         """GET /artifacts"""
-        params = {"page": page, "size": size}
-        if extra:
-            params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/artifacts", params=params)
+        kwargs_query_string = ""
+        if kwargs:
+            kwargs_query_string = "&" + "&".join(f"{k}={v}" for k, v in kwargs.items() if v is not None)
+
+        return self._c.request_raw("GET", f"/api/v2/artifact?size={size}&page={page}{kwargs_query_string}")
 
     def get(self, artifact_id: Union[str, int]) -> MaestroResponse:
         """GET /artifacts/{artifactId}"""
-        return self._c.request_raw("GET", f"/maestro/api/artifacts/{artifact_id}")
+        return self._c.request_raw("GET", f"/api/v2/artifact/{artifact_id}")
 
-    def download(self, artifact_id: Union[str, int]) -> MaestroResponse:
+    def get_file(self, artifact_id: Union[str, int]) -> MaestroResponse:
         """GET /artifacts/{artifactId}/download"""
-        return self._c.request_raw("GET", f"/maestro/api/artifacts/{artifact_id}/download")
-
-    def upload(self, *, file_field: str = "file", file_tuple: Iterable = None, **meta) -> MaestroResponse:
-        """
-        POST /artifacts (multipart). 
-        Args:
-            file_field: Field name expected by API (commonly "file").
-            file_tuple: A (filename, fileobj, content_type) tuple as expected by requests.
-            meta: Extra form fields to be sent as JSON part or text fields.
-        """
-        files = {file_field: file_tuple} if file_tuple else None
-        # Separate JSONable fields in a small trick:
-        headers = {"Content-Type": None}  # Let requests set multipart boundary.
-        return self._c.request_raw("POST", "/maestro/api/artifacts", files=files, headers=headers, json=meta)
-
-    def delete(self, artifact_id: Union[str, int]) -> MaestroResponse:
-        """DELETE /artifacts/{artifactId}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/artifacts/{artifact_id}")
+        return self._c.request_raw("GET", f"/api/v2/artifact/{artifact_id}/file")
 
 
 class _ErrorsAPI:
@@ -624,15 +609,14 @@ class _ErrorsAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/errors", params=params)
+        return self._c.request_raw("GET", "/api/v2/error", params=params)
 
     def get(self, error_id: Union[str, int]) -> MaestroResponse:
         """GET /errors/{errorId}"""
-        return self._c.request_raw("GET", f"/maestro/api/errors/{error_id}")
+        return self._c.request_raw("GET", f"/api/v2/error/{error_id}")
 
-    def delete(self, error_id: Union[str, int]) -> MaestroResponse:
-        """DELETE /errors/{errorId}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/errors/{error_id}")
+    def get_by_automation(self, automation_label:str) -> MaestroResponse:
+        return self._c.request_raw("GET", f"/api/v2/error?AutomationLabel={automation_label}&days=30")
 
 
 class _SchedulesAPI:
@@ -653,23 +637,23 @@ class _SchedulesAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/schedules", params=params)
+        return self._c.request_raw("GET", "/api/v2/scheduling", params=params)
 
     def get(self, schedule_id: Union[str, int]) -> MaestroResponse:
         """GET /schedules/{id}"""
-        return self._c.request_raw("GET", f"/maestro/api/schedules/{schedule_id}")
+        return self._c.request_raw("GET", f"/api/v2/scheduling/{schedule_id}")
 
     def create(self, **fields) -> MaestroResponse:
         """POST /schedules"""
-        return self._c.request_raw("POST", "/maestro/api/schedules", json=fields)
+        return self._c.request_raw("POST", "/api/v2/scheduling", json=fields)
 
     def update(self, schedule_id: Union[str, int], **fields) -> MaestroResponse:
         """PUT /schedules/{id}"""
-        return self._c.request_raw("PUT", f"/maestro/api/schedules/{schedule_id}", json=fields)
+        return self._c.request_raw("PUT", f"/api/v2/scheduling/{schedule_id}", json=fields)
 
     def delete(self, schedule_id: Union[str, int]) -> MaestroResponse:
         """DELETE /schedules/{id}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/schedules/{schedule_id}")
+        return self._c.request_raw("DELETE", f"/api/v2/scheduling/{schedule_id}")
 
 
 class _WorkspacesAPI:
