@@ -571,37 +571,21 @@ class _ResultFilesAPI:
     def __init__(self, client: MaestroClient):
         self._c = client
 
-    def list(self, page: int = 1, size: int = 50, extra: Optional[Dict[str, Any]] = None) -> MaestroResponse:
+    def list(self, page: int = 1, size: int = 50, **kwargs) -> MaestroResponse:
         """GET /artifacts"""
-        params = {"page": page, "size": size}
-        if extra:
-            params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/artifacts", params=params)
+        kwargs_query_string = ""
+        if kwargs:
+            kwargs_query_string = "&" + "&".join(f"{k}={v}" for k, v in kwargs.items() if v is not None)
+
+        return self._c.request_raw("GET", f"/api/v2/artifact?size={size}&page={page}{kwargs_query_string}")
 
     def get(self, artifact_id: Union[str, int]) -> MaestroResponse:
         """GET /artifacts/{artifactId}"""
-        return self._c.request_raw("GET", f"/maestro/api/artifacts/{artifact_id}")
+        return self._c.request_raw("GET", f"/api/v2/artifact/{artifact_id}")
 
-    def download(self, artifact_id: Union[str, int]) -> MaestroResponse:
+    def get_file(self, artifact_id: Union[str, int]) -> MaestroResponse:
         """GET /artifacts/{artifactId}/download"""
-        return self._c.request_raw("GET", f"/maestro/api/artifacts/{artifact_id}/download")
-
-    def upload(self, *, file_field: str = "file", file_tuple: Iterable = None, **meta) -> MaestroResponse:
-        """
-        POST /artifacts (multipart). 
-        Args:
-            file_field: Field name expected by API (commonly "file").
-            file_tuple: A (filename, fileobj, content_type) tuple as expected by requests.
-            meta: Extra form fields to be sent as JSON part or text fields.
-        """
-        files = {file_field: file_tuple} if file_tuple else None
-        # Separate JSONable fields in a small trick:
-        headers = {"Content-Type": None}  # Let requests set multipart boundary.
-        return self._c.request_raw("POST", "/maestro/api/artifacts", files=files, headers=headers, json=meta)
-
-    def delete(self, artifact_id: Union[str, int]) -> MaestroResponse:
-        """DELETE /artifacts/{artifactId}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/artifacts/{artifact_id}")
+        return self._c.request_raw("GET", f"/api/v2/artifact/{artifact_id}/file")
 
 
 class _ErrorsAPI:
