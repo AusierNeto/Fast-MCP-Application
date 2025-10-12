@@ -513,7 +513,7 @@ class _CredentialsAPI:
 
         Args:
             label: Credential label name.
-            values: Dict with secret key-value pairs, e.g. {"user": "user123", "password": "pass123"}.
+            values: Dict with secret key-value pairs
             repository_label: Credential repository label (defaults to DEFAULT).
         """
         secrets = [{"key": k, "value": v} for k, v in values.items()]
