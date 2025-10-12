@@ -319,7 +319,6 @@ class _TasksAPI:
 
     def list(self, **kwargs) -> MaestroResponse:
         """GET /tasks"""
-        print(f"kwargs: {kwargs}")
         query_params = "&".join(f"{k}={v}" for k, v in kwargs.items() if v is not None)
         return self._c.request_raw("GET", f"/api/v2/task?{query_params}")
 
@@ -498,29 +497,29 @@ class _CredentialsAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/credentials", params=params)
+        return self._c.request_raw("GET", "/api/v2/credential", params=params)
 
     def get(self, credential_id: Union[str, int]) -> MaestroResponse:
         """GET /credentials/{id}"""
-        return self._c.request_raw("GET", f"/maestro/api/credentials/{credential_id}")
+        return self._c.request_raw("GET", f"/api/v2/credential/{credential_id}")
 
     def create(self, label: str, values: Dict[str, Any], **kwargs) -> MaestroResponse:
         """POST /credentials"""
         payload = {"label": label, "values": values}
         payload.update(kwargs)
-        return self._c.request_raw("POST", "/maestro/api/credentials", json=payload)
+        return self._c.request_raw("POST", "/api/v2/credential", json=payload)
 
     def update(self, credential_id: Union[str, int], **fields) -> MaestroResponse:
         """PUT /credentials/{id}"""
-        return self._c.request_raw("PUT", f"/maestro/api/credentials/{credential_id}", json=fields)
+        return self._c.request_raw("PUT", f"/api/v2/credential/{credential_id}", json=fields)
 
     def delete(self, credential_id: Union[str, int]) -> MaestroResponse:
         """DELETE /credentials/{id}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/credentials/{credential_id}")
+        return self._c.request_raw("DELETE", f"/api/v2/credential/{credential_id}")
 
     def get_key(self, label: str, key: str) -> MaestroResponse:
         """GET /credentials/{label}/{key}"""
-        return self._c.request_raw("GET", f"/maestro/api/credentials/{label}/{key}")
+        return self._c.request_raw("GET", f"/api/v2/credential/{label}/key/{key}")
 
 
 class _DatapoolsAPI:
@@ -541,27 +540,22 @@ class _DatapoolsAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/datapools", params=params)
+        return self._c.request_raw("GET", "/api/v2/datapool", params=params)
+    
+    def get(self, datapool_label:str) -> MaestroResponse:
+        return self._c.request_raw("GET", f"/api/v2/datapool/{datapool_label}")
 
-    def items(self, label: str, page: int = 1, size: int = 100,
-              extra: Optional[Dict[str, Any]] = None) -> MaestroResponse:
-        """GET /datapools/{label}/items"""
-        params = {"page": page, "size": size}
-        if extra:
-            params.update(extra)
-        return self._c.request_raw("GET", f"/maestro/api/datapools/{label}/items", params=params)
-
-    def add_item(self, label: str, item: Dict[str, Any]) -> MaestroResponse:
-        """POST /datapools/{label}/items"""
-        return self._c.request_raw("POST", f"/maestro/api/datapools/{label}/items", json=item)
-
-    def update_item(self, label: str, item_id: Union[str, int], fields: Dict[str, Any]) -> MaestroResponse:
-        """PUT /datapools/{label}/items/{itemId}"""
-        return self._c.request_raw("PUT", f"/maestro/api/datapools/{label}/items/{item_id}", json=fields)
-
-    def delete_item(self, label: str, item_id: Union[str, int]) -> MaestroResponse:
-        """DELETE /datapools/{label}/items/{itemId}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/datapools/{label}/items/{item_id}")
+    def view(self, datapool_label:str) -> MaestroResponse:
+        return self._c.request_raw("GET", f"/api/v2/datapool/{datapool_label}/view")
+    
+    def summary(self, datapool_label:str) -> MaestroResponse:
+        return self._c.request_raw("GET", f"/api/v2/datapool/{datapool_label}/summary")
+    
+    def create(self, **kwargs) -> MaestroResponse:
+        return self._c.request_raw("POST", f"/api/v2/datapool", json=kwargs)
+    
+    def add_item(self, datapool_label:str, **kwargs) -> MaestroResponse:
+        return self._c.request_raw("POST", f"/api/v2/datapool/{datapool_label}/push", json=kwargs)
 
 
 class _ResultFilesAPI:
@@ -626,15 +620,15 @@ class _ErrorsAPI:
         params = {"page": page, "size": size}
         if extra:
             params.update(extra)
-        return self._c.request_raw("GET", "/maestro/api/errors", params=params)
+        return self._c.request_raw("GET", "/api/v2/error", params=params)
 
     def get(self, error_id: Union[str, int]) -> MaestroResponse:
         """GET /errors/{errorId}"""
-        return self._c.request_raw("GET", f"/maestro/api/errors/{error_id}")
+        return self._c.request_raw("GET", f"/api/v2/error/{error_id}")
 
     def delete(self, error_id: Union[str, int]) -> MaestroResponse:
         """DELETE /errors/{errorId}"""
-        return self._c.request_raw("DELETE", f"/maestro/api/errors/{error_id}")
+        return self._c.request_raw("DELETE", f"/api/v2/error/{error_id}")
 
 
 class _SchedulesAPI:
