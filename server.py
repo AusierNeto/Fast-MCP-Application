@@ -7,6 +7,7 @@ from maestro_client import MaestroClient
 load_dotenv()
 
 mcp = FastMCP("Bots")
+
 client = MaestroClient(
     login=os.getenv("LOGIN"),
     key=os.getenv("KEY"),
@@ -17,6 +18,11 @@ def list_tasks() -> dict:
     """List Botcity tasks."""
     return client.tasks.list().data
 
+@mcp.tool
+def ping() -> dict:
+    """Health check"""
+    return {"status": "ok"}
+
 
 if __name__ == "__main__":
-    mcp.run(transport="streamable-http", port=8000)
+    mcp.run(transport="http", port=8000)

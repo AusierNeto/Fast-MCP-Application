@@ -1,55 +1,53 @@
-from langchain_ollama import OllamaLLM
-from langchain.agents import Tool, initialize_agent
-from langgraph.prebuilt import create_react_agent
-from fastmcp import Client
-import asyncio
+import requests
 
-from utils.constants import MCP_SERVER_URL, OLLAMA_BASE_URL
+from langchain.agents import initialize_agent, AgentType
+from langchain_community.llms import Ollama
+from langchain.tools import BaseTool
 
-llm = OllamaLLM(model="llama3", base_url=OLLAMA_BASE_URL)
+class MCPTool(BaseTool):
+    name: str
+    description: str
+    endpoint: str  # URL completa do recurso no seu MCP Server
 
-async def main():
-    mcp = Client(MCP_SERVER_URL)
-    async with mcp:
-        tools = await mcp.list_tools()
+    def _run(self, query: str):
+        """Executa a chamada HTTP para o MCP endpoint."""
+        response = requests.post(
+            self.endpoint,
+            json={"input": query},
+            timeout=20
+        )
+        response.raise_for_status()
+        return response.json()
 
-        agent_tools = []
-        # Create per-tool synchronous wrappers (they will run the async call inside a fresh event loop)
-        for t in tools:
-            def _tool_sync(*args, _tool_name=t.name, **kwargs):
-                # Normalize input into a dict to pass to mcp.call_tool
-                if args and not kwargs:
-                    if len(args) == 1:
-                        payload = args[0]
-                        # If the agent returned a placeholder meaning "no input needed",
-                        # treat it as empty args (don't send an 'input' key that the tool
-                        # doesn't expect).
-                        if isinstance(payload, str):
-                            s = payload.strip().lower()
-                            if s in ("", "none", "n/a") or "don't need" in s or "do not need" in s or s.startswith("none"):
-                                args_dict = {}
-                            else:
-                                args_dict = {"input": payload}
-                        elif isinstance(payload, dict):
-                            args_dict = payload
-                        else:
-                            args_dict = {"arg": payload}
-                    else:
-                        args_dict = {"args": list(args)}
-                else:
-                    args_dict = kwargs or {}
+    async def _arun(self, query: str):
+        return self._run(query)
 
-                # Run the async MCP call in a fresh event loop (safe inside a worker thread)
-                return asyncio.run(mcp.call_tool(_tool_name, args_dict))
+llm = Ollama(
+    model="llama3", 
+    base_url="http://localhost:11434"
+)
 
-            agent_tools.append(Tool(name=t.name, func=_tool_sync, description=t.description))
+tools = [
+    MCPTool(
+        name="get_tasks_info",
+        description="Retorna as informações das tarefas que foram executadas e estão em execução no sistema",
+        endpoint="http://localhost:8000/mcp/resources/list_tasks"
+    ),
+    # MCPTool(
+    #     name="get_system_status",
+    #     description="Consulta o status atual do sistema",
+    #     endpoint="http://localhost:8000/mcp/resources/get_system_status"
+    # ),
+]
 
-        agent = initialize_agent(llm=llm, tools=agent_tools, agent_type="zero-shot-react-description", verbose=True)
+agent = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True,
+)
 
-        print("Invoking agent...")
-        # Run the (synchronous) agent.invoke in a thread so tool wrappers can use asyncio.run safely.
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(None, lambda: agent.invoke("Tell me the quantity of tasks that have succeeded"))
-        print("Agent result:\n", result)
-
-asyncio.run(main())
+if __name__ == '__main__':
+    question = "Quais as tasks que mais resultaram em falha nos últimos 7 dias?"
+    response = agent.run(question)
+    print(response)
