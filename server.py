@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fastmcp import FastMCP
 from maestro_client import MaestroClient
 
+
 load_dotenv()
 
 mcp = FastMCP("Bots", stateless_http=True)
@@ -13,6 +14,7 @@ client = MaestroClient(
     login=os.getenv("LOGIN"),
     key=os.getenv("KEY"),
 )
+
 
 @mcp.tool(
     name="list_tasks",           # Custom tool name for the LLM
@@ -23,10 +25,10 @@ client = MaestroClient(
 async def list_tasks() -> dict:
     """List Botcity tasks."""
     tasks = await client.tasks.list()
-    print("Tasks fetched:", tasks)
+    print("Tasks fetched")
     return tasks.data
 
-@mcp.tool
+@mcp.tool(name="ping", description="Health check endpoint")
 def ping() -> dict:
     """Health check"""
     return {"status": "ok"}
