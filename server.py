@@ -22,14 +22,14 @@ client = MaestroClient(
     tags={"automation", "tasks"},      # Optional tags for organization/filtering
     meta={"version": "1.0", "author": "product-team"}  # Custom metadata
 )
-async def list_tasks() -> dict:
+async def list_tasks(input:dict=None) -> dict:
     """List Botcity tasks."""
     tasks = await client.tasks.list()
     print("Tasks fetched")
     return tasks.data
 
 @mcp.tool(name="ping", description="Health check endpoint")
-def ping() -> dict:
+def ping(input:dict=None) -> dict:
     """Health check"""
     return {"status": "ok"}
 

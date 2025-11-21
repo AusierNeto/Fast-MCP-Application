@@ -4,7 +4,7 @@ import sys
 from llama_index.tools.mcp import BasicMCPClient, McpToolSpec
 from llama_index.core.agent.workflow import ReActAgent
 from llama_index.llms.ollama import Ollama
-from utils.prompt_templates import BOTCITY_TOOLS_PROMPT
+from utils.prompt_templates import MAESTRO_AUTOMATION_PROMPT
 import os
 
 # Configuration variables
@@ -29,9 +29,9 @@ async def setup_agent():
         llm = Ollama(model=MODEL_NAME, temperature=TEMPERATURE)
         
         # Create agent with flight search prompt
-        system_prompt = BOTCITY_TOOLS_PROMPT.template.replace("{tools}", "").replace("{tool_names}", "").replace("{input}", "")
+        system_prompt = MAESTRO_AUTOMATION_PROMPT.template.replace("{tools}", "").replace("{tool_names}", "").replace("{input}", "")
         agent = ReActAgent(
-            name="FlightAgent", 
+            name="Bot Agent", 
             llm=llm, 
             tools=tools,
             system_prompt=system_prompt,
