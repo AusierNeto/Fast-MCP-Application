@@ -93,6 +93,8 @@ async def run_agent(llm, mcp_client, query: str, system_prompt: str):
         print(f"\n🔧 Calling MCP Tool: {tool_name}")
         observation = await mcp_client.call_tool(tool_name, tool_input)
 
+        print(f"📝 Observation: {observation}")
+
         # Append Observation to prompt and continue
         prompt += (
             step_output
@@ -116,14 +118,25 @@ async def setup_agent():
         tools = await mcp_client.list_tools()
         print(f"Found {len(tools)} tools")
 
+        # Monta um bloco de descrição das tools para o prompt
+        tools_block = "\n".join(
+            f"- {t.name}: {t.description or ''}"
+            for t in tools
+        )
+
+        # Monta a lista de nomes de tools que o modelo PODE usar em Action:
+        tool_names = ", ".join(t.name for t in tools)
+
         # Prepare Gemini LLM
         llm = genai.GenerativeModel(MODEL_NAME)
 
         # Build system prompt
         system_prompt = (
-            MAESTRO_AUTOMATION_PROMPT.template
-                .replace("{tools}", "")
-                .replace("{tool_names}", "")
+            MAESTRO_AUTOMATION_PROMPT.format(
+                tools=tools_block,
+                tool_names=tool_names,
+                input="{input}"
+            )
         )
 
         # Return both the LLM and an *already connected* MCP client session
